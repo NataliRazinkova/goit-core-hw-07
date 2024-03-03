@@ -48,8 +48,6 @@ class AddressBook:
 
         return upcoming_birthdays
 
-
-
 def input_error(func):
     def inner(*args, **kwargs):
         try:
@@ -83,8 +81,8 @@ def change_contact(args, contacts):
 
 @input_error
 def show_phone(args, contacts):
-        name = args[0]
-        return contacts[name] if name in contacts.keys() else "No such user"
+    name = args[0]
+    return contacts[name] if name in contacts.keys() else "No such user"
 
 @input_error  
 def show_all(args, contacts):
@@ -95,7 +93,7 @@ def show_all(args, contacts):
 
 @input_error
 def main():
-    contacts = {}
+    contacts = AddressBook()
     print("Welcome to the assistant bot!")
     while True:
         user_input = input("Enter a command: ")
