@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
-class Birthday():
+class Birthday:
     def __init__(self, day, month, year):
         self.day = day
         self.month = month
@@ -12,38 +12,48 @@ class Record:
         self.phone = phone
         self.birthday = birthday
 
-    def add_birthday(self, birthday):
-        try:
-            datetime.strptime(birthday, '%Y-%m-%d')
-            self.birthday = birthday
-        except ValueError:
-            print("Incorrect birthday format. Please use YYYY-MM-DD format.")
-
-    def validate_phone(self, phone):
-        pass
-
-    def validate_birthday(self, birthday):
-        try:
-            datetime.strptime(birthday, '%Y-%m-%d')
-            return True
-        except ValueError:
-            return False
-
-record = Record("John Doe", "123-456-7890")
-record.add_birthday("1990-05-15")
-print(record.birthday)
+    def add_birthday(self, day, month, year):
+        self.birthday = Birthday(day, month, year)
 
 class AddressBook:
     def __init__(self):
-        self.contacts = []
+        self.data = []
+
+    def add_contact(self, name, phone, birthday=None):
+        self.data.append(Record(name, phone, birthday))
+
+    def change_contact(self, name, phone, birthday=None):
+        for contact in self.data:
+            if contact.name == name:
+                contact.phone = phone
+                if birthday:
+                    contact.add_birthday(*birthday)
+                return "Contact changed."
+        return f"Not changed, no user {name}"
+
+    def get_contact_phone(self, name):
+        for contact in self.data:
+            if contact.name == name:
+                return contact.phone
+        return "No such user."
+
+    def get_birthday(self, name):
+        for contact in self.data:
+            if contact.name == name:
+                if contact.birthday:
+                    return f"{contact.name}'s birthday is on {contact.birthday.day}.{contact.birthday.month}.{contact.birthday.year}"
+                else:
+                    return f"{contact.name} doesn't have a birthday set."
+        return "No such user."
 
     def get_upcoming_birthdays(self):
         upcoming_birthdays = []
         next_week = datetime.now() + timedelta(days=7)
 
-        for contact in self.contacts:
+        for contact in self.data:
             if contact.birthday is not None:
-                if contact.birthday.month == next_week.month and contact.birthday.day >= next_week.day:
+                if (contact.birthday.month == next_week.month and
+                        contact.birthday.day >= next_week.day):
                     upcoming_birthdays.append(contact)
 
         return upcoming_birthdays
@@ -53,51 +63,26 @@ def input_error(func):
         try:
             return func(*args, **kwargs)
         except ValueError:
-            return "Give me name and phone please."
+            return "Incorrect format. Please check your input."
         except KeyError:
-            return "No such name found"
+            return "No such name found."
         except IndexError:
-            return "No found"
-
+            return "No input found."
     return inner
+
 @input_error
 def parse_input(user_input):
     cmd, *args = user_input.split()
     cmd = cmd.strip().lower()
-    return cmd, *args
-
-@input_error
-def add_contact(args, contacts):
-    name, phone = args
-    contacts[name] = phone
-    return "Contact added."
-
-@input_error
-def change_contact(args, contacts):
-    if args[0] in contacts.keys():
-        add_contact(args, contacts)
-    else:
-        print (f"Not changet, no user {args[0]}")
-
-@input_error
-def show_phone(args, contacts):
-    name = args[0]
-    return contacts[name] if name in contacts.keys() else "No such user"
-
-@input_error  
-def show_all(args, contacts):
-    s=''
-    for key in contacts:
-        s+=(f"{key:10} : {contacts[key]:10}\n")
-    return s
+    return cmd, args
 
 @input_error
 def main():
-    contacts = AddressBook()
+    book = AddressBook()
     print("Welcome to the assistant bot!")
     while True:
         user_input = input("Enter a command: ")
-        command, *args = parse_input(user_input)
+        command, args = parse_input(user_input)
 
         if command in ["close", "exit"]:
             print("Good bye!")
@@ -105,24 +90,34 @@ def main():
         elif command == "hello":
             print("How can I help you?")
         elif command == "add":
-            print(add_contact(args, contacts))
+            name, phone, *birthday = args
+            birthday = birthday if birthday else None
+            book.add_contact(name, phone, birthday)
+            print("Contact added.")
         elif command == "change":
-            print(change_contact(args, contacts))
+            name, phone, *birthday = args
+            birthday = birthday if birthday else None
+            print(book.change_contact(name, phone, birthday))
         elif command == "show":
-            print(show_phone(args,contacts))
-        elif command == "all":
-            print(show_all(args,contacts))
+            name = args[0]
+            print(book.get_contact_phone(name))
+        elif command == "add-birthday":
+            name, day, month, year = args
+            book.change_contact(name, None, (day, month, year))
+            print("Birthday added.")
+        elif command == "show-birthday":
+            name = args[0]
+            print(book.get_birthday(name))
+        elif command == "birthdays":
+            birthdays = book.get_upcoming_birthdays()
+            if birthdays:
+                print("Upcoming birthdays:")
+                for contact in birthdays:
+                    print(f"{contact.name} - {contact.birthday.day}.{contact.birthday.month}.{contact.birthday.year}")
+            else:
+                print("No upcoming birthdays in the next week.")
         else:
             print("Invalid command.")
 
-@input_error
-def add_birthday(self, birthday):
-        try:
-            datetime.strptime(birthday, '%Y-%m-%d')
-            self.birthday = birthday
-        except ValueError:
-            print("Incorrect birthday format. Please use YYYY-MM-DD format.")
-
 if __name__ == "__main__":
     main()
-
